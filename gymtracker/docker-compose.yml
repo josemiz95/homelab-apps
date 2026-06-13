@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  gymtracker:
+    build: .
+    ports:
+      - "3333:3000"        # change host port as needed
+    volumes:
+      - gymtracker_data:/app/data
+    environment:
+      - DATABASE_URL=file:/app/data/gymtracker.db
+    restart: unless-stopped
+
+volumes:
+  gymtracker_data:

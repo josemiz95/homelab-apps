@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique // "Josemi" | "Alba"
+  sessions Session[]
+}
+
+model Day {
+  id        Int           @id @default(autoincrement())
+  name      String // "Push", "Pull", "Pierna A"...
+  order     Int // display order
+  exercises DayExercise[]
+}
+
+// Exercises are global and shared between days, so weight history follows
+// the exercise wherever it appears.
+model Exercise {
+  id       Int               @id @default(autoincrement())
+  name     String // "Press Banca", "Sentadilla"...
+  variants ExerciseVariant[]
+  days     DayExercise[]
+}
+
+model DayExercise {
+  id         Int      @id @default(autoincrement())
+  order      Int // display order within the day
+  dayId      Int
+  exerciseId Int
+  day        Day      @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@unique([dayId, exerciseId])
+}
+
+model ExerciseVariant {
+  id         Int       @id @default(autoincrement())
+  name       String // "Barra", "Mancuernas", "Smith", "Máquina"...
+  exerciseId Int
+  exercise   Exercise  @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  sessions   Session[]
+}
+
+model Session {
+  id        Int             @id @default(autoincrement())
+  weight    Float? // kg — null for bodyweight/static exercises
+  reps      Int? // null for static holds; at least one of weight/reps is set
+  date      DateTime        @default(now())
+  variantId Int
+  variant   ExerciseVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User            @relation(fields: [userId], references: [id])
+
+  @@index([variantId, userId, date])
+}
